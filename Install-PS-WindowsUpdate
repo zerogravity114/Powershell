@@ -1,0 +1,48 @@
+#######################################################################################
+# Name: Install-WU-PSModule.ps1
+# Description: Installs the Windows Update Powershell Module
+# Author: Patrick Carpenter
+#######################################################################################
+# Version History
+# 1.1 - Cleaned up code and refined functions (April 22, 2015)
+# 1.0 - Initial Release (February 10, 2015)
+
+# Define some variables
+$modulesource = "https://gallery.technet.microsoft.com/scriptcenter/2d191bcd-3308-4edd-9de2-88dff796b0bc/file/41459/43/PSWindowsUpdate.zip"
+$moduletarget = "C:\DoNotBackup\PSWindowsUpdate.zip"
+
+# Define some functions
+function CreateFolder([string]$fpath) # Checks if a path exists and creates if it does not
+	{
+	if(Test-Path -Path $fpath)
+		{
+		Write-Debug "Directory $fpath already exists"
+		}
+	else
+		{
+		Write-Debug "Creating $fpath"
+		New-Item -ItemType Directory -Force -Path $fpath
+		}
+	}
+function DownloadPackage([string]$srcurl, [string]$destpath) # Downloads a URL to a destination path
+	{
+	Write-Debug "Downloading $srcurl via BitsTransfer to $destpath"
+	Import-Module BitsTransfer
+	Start-BitsTransfer $srcurl $destpath
+	}
+function Expand-ZIPFile([string]$file, [string]$destination) # Expands a ZIP Archive to a destination path
+	{
+	Write-Debug Unzipping $file to $destination
+	$shell = new-object -com shell.application
+	$zip = $shell.NameSpace($file)
+	foreach($item in $zip.items())
+		{
+		$shell.NameSpace($destination).copyhere($item)
+		}
+	}
+# Script begins here
+# Create our working directory
+CreateFolder "C:\DoNotBackup"
+# Download the PowerShell Scripts
+DownloadPackage $modulesource $moduletarget
+Expand-ZIPFile -File "C:\DoNotBackup\PSWindowsUpdate.zip" -Destination "$Env:windir\System32\WindowsPowerShell\v1.0\Modules"
